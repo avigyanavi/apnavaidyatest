@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "422927221797",
+    "project_id": "apna-vaidya",
+    "storage_bucket": "apna-vaidya.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:422927221797:android:ec64f40e3647ad6fe9abcc",
+        "android_client_info": {
+          "package_name": "com.example.apnavaidyatest"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyArcvbjczznChm9Xrhu-A9ZeeC0xEOdi2c"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
