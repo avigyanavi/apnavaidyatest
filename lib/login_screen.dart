@@ -16,6 +16,10 @@ class _LoginScreenState extends State<LoginScreen> {
     Navigator.pushNamed(context, '/signUp');
   }
 
+  void navigateToForgotPassword() {
+    Navigator.pushNamed(context, '/forgotPassword');
+  }
+
   void navigateToDashboard() {
     Navigator.pushNamed(context, '/dashboard');
   }
@@ -101,7 +105,7 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
             TextButton(
               onPressed: () {
-                // Add forgot password functionality
+                navigateToForgotPassword();
               },
               child: Text(
                 'Forgot your password?',

@@ -1,3 +1,4 @@
+import 'package:apnavaidyatest/forgot_password.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'login_screen.dart'; // Ensure you have this file created
@@ -34,6 +35,8 @@ class MyApp extends StatelessWidget {
         '/': (context) => LoginScreen(), // Default route
         '/signUp': (context) => SignUpScreen(), // Sign Up screen
         '/dashboard': (context) => DashboardScreen(), // Dashboard after login
+        '/forgotPassword': (context) =>
+            ForgotPasswordScreen() // Forgot Password screen
       },
     );
   }
