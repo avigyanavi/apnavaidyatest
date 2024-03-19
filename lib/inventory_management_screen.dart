@@ -1,7 +1,10 @@
+import 'package:apnavaidyatest/drug_details.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:excel/excel.dart';
+import 'dart:io';
 
 class InventoryManagementScreen extends StatefulWidget {
   @override
@@ -43,11 +46,53 @@ class _InventoryManagementScreenState extends State<InventoryManagementScreen> {
   }
 
   Future<void> pickAndParseExcelFile() async {
-    FilePickerResult? result = await FilePicker.platform
-        .pickFiles(type: FileType.custom, allowedExtensions: ['xlsx']);
+    FilePickerResult? result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['xlsx'],
+      withReadStream: true,
+    );
 
     if (result != null) {
-      // Logic to handle the Excel file will be here
+      var bytes = File(result.files.single.path!).readAsBytesSync();
+      var excel = Excel.decodeBytes(bytes);
+
+      for (var table in excel.tables.keys) {
+        for (var row in excel.tables[table]!.rows) {
+          String itemName = (row[0]?.value ?? '').toString();
+          String category = (row[1]?.value ?? '').toString();
+          String price = row[2]?.value.toString() ?? '';
+          String quantityAvailable = row[3]?.value.toString() ?? '';
+
+          await _firestore
+              .collection('pharmacies')
+              .doc(_auth.currentUser?.uid)
+              .collection('inventory')
+              .add({
+            'itemName': itemName,
+            'category': category,
+            'price': price,
+            'quantityAvailable': quantityAvailable,
+          });
+        }
+      }
+      setState(() {}); // Refresh the list after adding items
+    }
+  }
+
+  Future<void> deleteCategory(String category) async {
+    String? pharmacyId = _auth.currentUser?.uid;
+    if (pharmacyId != null) {
+      var querySnapshot = await _firestore
+          .collection('pharmacies')
+          .doc(pharmacyId)
+          .collection('inventory')
+          .where('category', isEqualTo: category)
+          .get();
+
+      for (var doc in querySnapshot.docs) {
+        await doc.reference.delete();
+      }
+      setState(() {}); // Refresh the list after deleting items
     }
   }
 
@@ -75,11 +120,11 @@ class _InventoryManagementScreenState extends State<InventoryManagementScreen> {
         stream: getInventoryStream(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return CircularProgressIndicator();
+            return Center(child: CircularProgressIndicator());
           }
 
           if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return Text("No inventory items found.");
+            return Center(child: Text("No inventory items found."));
           }
 
           Map<String, List<Widget>> categorizedItems = {};
@@ -87,9 +132,25 @@ class _InventoryManagementScreenState extends State<InventoryManagementScreen> {
             var data = doc.data() as Map<String, dynamic>;
             String category = data['category'] ?? 'Uncategorized';
             String itemName = data['itemName'] ?? 'No Name';
-            categorizedItems
-                .putIfAbsent(category, () => [])
-                .add(ListTile(title: Text(itemName)));
+            String price = data['price'] ?? 'No Price';
+            String quantityAvailable = data['quantityAvailable'] ?? '0';
+            categorizedItems.putIfAbsent(category, () => []).add(
+                  InkWell(
+                    onTap: () {
+                      // Navigate to DrugDetailsScreen with the drug details
+                      Navigator.of(context).push(MaterialPageRoute(
+                        builder: (context) => DrugDetailsScreen(
+                          itemName: itemName,
+                          price: price,
+                          quantityAvailable: quantityAvailable,
+                        ),
+                      ));
+                    },
+                    child: ListTile(
+                      title: Text(itemName),
+                    ),
+                  ),
+                );
           }
 
           return Column(
@@ -100,6 +161,11 @@ class _InventoryManagementScreenState extends State<InventoryManagementScreen> {
                     return ExpansionTile(
                       title: Text(entry.key),
                       children: entry.value,
+                      // Add a trailing icon/button to delete the category
+                      trailing: IconButton(
+                        icon: Icon(Icons.delete),
+                        onPressed: () => deleteCategory(entry.key),
+                      ),
                     );
                   }).toList(),
                 ),
